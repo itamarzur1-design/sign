@@ -101,7 +101,7 @@ function spec(){
  return A;
 }
 const PW=1240,PH=1754,MR=1240-125,ML=125,FS=30,LH=50;
-let SIGBOX=null;
+let SIGBOX=null,LSIG=null;
 function wrap(ctx,text,maxW){const words=text.split(' ');const lines=[];let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(ctx.measureText(t).width>maxW&&cur){lines.push(cur);cur=w}else cur=t}if(cur)lines.push(cur);return lines}
 function renderText(){
  doc.width=PW;doc.height=PH;const c=dg;c.fillStyle='#fff';c.fillRect(0,0,PW,PH);c.fillStyle='#000';c.direction='rtl';c.textBaseline='alphabetic';
@@ -118,6 +118,7 @@ function renderText(){
    if(b.t==='sig'&&NAME&&!b.date){c.fillText(NAME,ML+160,y+70)}
    if(b.date){c.fillRect(MR-260,y,260,2);c.fillText('תאריך',MR-130,y+36);if(b.t==='sig'){c.font=F(true,28);c.fillText(DSTR,MR-130,y-12)}}
    if(b.t==='sig')SIGBOX={x:ML,y:y-80,w:320,h:76};
+   if(b.t==='lsig')LSIG={x:(ML+160)*72/150,y:y*72/150};
    y+=b.t==='sig'&&NAME&&!b.date?LH*2:LH*1.4;}
  }
  if(sigCanvas&&SIGBOX){const k=Math.min(SIGBOX.w/sigCanvas.width,SIGBOX.h/sigCanvas.height);const w=sigCanvas.width*k,h=sigCanvas.height*k;c.drawImage(sigCanvas,SIGBOX.x+(SIGBOX.w-w)/2,SIGBOX.y+(SIGBOX.h-h),w,h)}
@@ -142,6 +143,7 @@ document.getElementById('send').onclick=async()=>{msg.className='';
  if(!sigCanvas){msg.textContent='צריך לחתום קודם · لازم توقّع أول · Please sign first';return}
  render();const img=doc.toDataURL('image/jpeg',0.85);
  const pdf=new jspdf.jsPDF({unit:'pt',format:'a4'});pdf.addImage(img,'JPEG',0,0,595.28,841.89);
+ const ls=DOCT==='poa'?{x:110,y:697}:LSIG; if(ls)pdf.setProperties({title:TITLES[DOCT]+(NAME?' - '+NAME:''),subject:'lsig:'+ls.x.toFixed(1)+','+ls.y.toFixed(1),keywords:'doc:'+DOCT});
  const fname=TITLES[DOCT]+' חתום'+(NAME?' - '+NAME:'')+'.pdf';const blob=pdf.output('blob');const file=new File([blob],fname,{type:'application/pdf'});
  msg.textContent='שולח… · جاري الإرسال… · Sending…';
  try{const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=rej;fr.readAsDataURL(blob)});

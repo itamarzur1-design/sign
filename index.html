@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="he" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=David+Libre:wght@400;700&display=swap">
 <title>ייפוי כוח לחתימה – עו"ד איתמר צור</title>
 <style>
 :root{--bg:#f4f6f9;--fg:#18202c;--muted:#5b6576;--card:#fff;--line:#d3d9e2;--accent:#1f5fd1;--ok:#17703f}
@@ -21,11 +22,11 @@ button{font:inherit;font-weight:700;padding:13px 16px;border-radius:9px;border:1
 .ok{color:var(--ok)}
 </style></head><body>
 <div class="wrap">
-  <div><h1>ייפוי כוח לחתימה – עו"ד איתמר צור</h1>
+  <div><h1 id="h1">ייפוי כוח לחתימה – עו"ד איתמר צור</h1>
   <div class="sub">توكيل للتوقيع – المحامي إيتمار تسور · Power of attorney for signature</div></div>
   <canvas id="doc"></canvas>
   <div class="box">
-    <label for="phone">מספר טלפון (לא חובה) · رقم التلفون (اختياري) · Phone (optional)</label>
+    <label for="phone" id="phlab">מספר טלפון (לא חובה) · رقم التلفون (اختياري) · Phone (optional)</label>
     <input id="phone" type="tel" inputmode="tel" autocomplete="tel">
     <label for="pad">חתום כאן באצבע · وقّع هنا بإصبعك · Sign here with your finger</label>
     <canvas id="pad"></canvas>
@@ -44,14 +45,86 @@ const now=new Date();
 const DATE=(P.get('d')||`${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`).split('/');
 const doc=document.getElementById('doc'),dg=doc.getContext('2d');
 const tpl=new Image();let K=1,sigCanvas=null;
-tpl.onload=()=>{doc.width=tpl.naturalWidth;doc.height=tpl.naturalHeight;K=doc.width/595.3;render()};tpl.src=TPL;
+tpl.onload=()=>{if((new URLSearchParams(location.hash.slice(1)).get('doc')||'poa')!=='poa')return;doc.width=tpl.naturalWidth;doc.height=tpl.naturalHeight;K=doc.width/595.3;render()};tpl.src=TPL;
 function txt(t,cx,yb,size,align){if(!t)return;dg.save();dg.fillStyle='#0b1d4a';dg.font=`bold ${size*K}px Arial, sans-serif`;dg.direction='rtl';dg.textAlign=align||'center';dg.fillText(t,cx*K,yb*K);dg.restore()}
-function render(){dg.drawImage(tpl,0,0);
+function renderPoa(){dg.drawImage(tpl,0,0);
  txt(NAME,518,86,10.5,'right');           // name line
  txt(ID,355,86,10.5,'center');            // ID line
  txt(DATE[0],351,608,10.5);txt(DATE[1],280,608,10.5);txt(DATE[2],224,608,10.5); // date
  const ph=document.getElementById('phone').value.trim(); if(ph){dg.save();dg.direction='ltr';dg.fillStyle='#0b1d4a';dg.font=`bold ${10.5*K}px Arial`;dg.textAlign='center';dg.fillText(ph,400*K,636*K);dg.restore()}
  if(sigCanvas){const bx=112,bw=136,by=611,bh=29;const k=Math.min(bw*K/sigCanvas.width,bh*K/sigCanvas.height);const w=sigCanvas.width*k,h=sigCanvas.height*k;dg.drawImage(sigCanvas,bx*K+(bw*K-w)/2,by*K+(bh*K-h),w,h)}}
+
+const DOCT=(P.get('doc')||'poa');
+const FEM=P.get('g')==='f'; const g=(m,f)=>FEM?f:m;
+const pad2=x=>String(x).padStart(2,'0');
+const DSTR=pad2(DATE[0])+'.'+pad2(DATE[1])+'.'+DATE[2];
+const NM=NAME||'____________________';
+const IDTXT=ID?(/^[0-9]+$/.test(ID)?'ת.ז. '+ID:ID):'______________';
+const XTRA=[1,2,3,4,5,6,7,8].map(k=>P.get('x'+k)).filter(Boolean);
+const LANG=P.get('lang');
+const TITLES={poa:'ייפוי כוח',trib:'תצהיר לבית הדין לעררים',pet:'תצהיר לעתירה מנהלית',gen:'תצהיר',med:'ויתור על סודיות רפואית'};
+function affIntro(){return `אני הח"מ, ${NM}, ${IDTXT}, לאחר שהוזהרתי כי עליי לומר את האמת וכי ${g('אהיה צפוי','אהיה צפויה')} לעונשים הקבועים בחוק אם לא אעשה כן, ${g('מצהיר','מצהירה')} בזאת בכתב כדלקמן:`}
+function affAtt(){return `אני הח"מ, עו"ד איתמר צור, מ"ר 55863, מאשר בזאת כי ביום ${DSTR} ${g('הופיע','הופיעה')} בפניי ${g('מר','גב\'')} ${NM}, ${g('אשר זוהה','אשר זוהתה')} באמצעות ${IDTXT}`+(LANG?`, ולאחר שתוכן התצהיר הוסבר ${g('לו','לה')} בשפה ${LANG}, ${g('שאותה הוא מבין','שאותה היא מבינה')}, ו${g('אישר','אישרה')} כי ${g('הבין','הבינה')} את תוכנו`:'')+`, ולאחר ש${g('הזהרתיו','הזהרתיה')} כי ${g('עליו','עליה')} לומר את האמת וכי ${g('יהיה צפוי','תהיה צפויה')} לעונשים הקבועים בחוק אם לא ${g('יעשה','תעשה')} כן, ${g('אישר','אישרה')} את נכונות ${g('הצהרתו','הצהרתה')} דלעיל ו${g('חתם','חתמה')} עליה בפניי.`}
+function spec(){
+ const A=[];
+ if(DOCT==='trib'){
+  const auth=P.get('a')||'יחידת הטיפול במבקשי מקלט', dd=P.get('dd'), f=P.get('f'), x=P.get('enf')==='1';
+  A.push({t:'title',s:'תצהיר'},{t:'p',s:affIntro()});
+  A.push({t:'n',s:`אני ${g('מוסר','מוסרת')} תצהירי זה במסגרת הערר שאני ${g('מגיש','מגישה')} לבית הדין לעררים על החלטת ${auth}`+(dd?` מיום ${dd}`:'')+(f?` (תיק ${f})`:'')+(x?', ובתמיכה לבקשה למניעת הליכי אכיפה המוגשת עמו':'')+'.'});
+  XTRA.forEach(t=>A.push({t:'n',s:t}));
+  A.push({t:'n',s:`אני ${g('מצהיר','מצהירה')} כי כל האמור בערר${x?' ובבקשה':''} הוא אמת.`},{t:'n',s:'זהו שמי, זו חתימתי ותוכן תצהירי לעיל אמת.'});
+  A.push({t:'sig',label:g('המצהיר','המצהירה')},{t:'att',s:affAtt()},{t:'lsig',label:'איתמר צור, עו"ד'});
+ } else if(DOCT==='pet'){
+  const r=P.get('r')||'______________________', sb=P.get('s');
+  A.push({t:'title',s:'תצהיר'},{t:'p',s:affIntro()});
+  A.push({t:'n',s:`אני ${g('העותר','העותרת')} בעתירה המנהלית נגד ${r}`+(sb?`, שעניינה ${sb}`:'')+', ואני עושה תצהיר זה בתמיכה לעתירה.'});
+  A.push({t:'n',s:`העובדות המפורטות בעתירה בנוגע אליי ידועות לי מידיעה אישית. העובדות הנוגעות לפניות ולהליכים שניהל בא כוחי, עו"ד איתמר צור, ידועות לי ממנו ומהמסמכים, ואני ${g('מאמין','מאמינה')} להן. הטענות המשפטיות הן על פי ייעוץ משפטי שקיבלתי.`});
+  XTRA.forEach(t=>A.push({t:'n',s:t}));
+  A.push({t:'n',s:`אני ${g('מצהיר','מצהירה')} כי זה שמי, זו חתימתי, ותוכן תצהירי אמת.`});
+  A.push({t:'sig',label:g('המצהיר','המצהירה')},{t:'att',s:affAtt()},{t:'lsig',label:'איתמר צור, עו"ד'});
+ } else if(DOCT==='gen'){
+  const sb=P.get('s')||'______________________', w=P.get('w')||sb;
+  A.push({t:'title',s:'תצהיר'},{t:'p',s:affIntro()});
+  A.push({t:'n',s:`הנני עושה תצהיר זה בתמיכה ל${sb}.`});
+  XTRA.forEach(t=>A.push({t:'n',s:t}));
+  A.push({t:'n',s:`אני ${g('מצהיר','מצהירה')} כי כל האמור ב${w} אמת הוא.`},{t:'n',s:`הנני ${g('מצהיר','מצהירה')}, כי זהו שמי וזוהי חתימתי, ותוכן תצהירי אמת.`});
+  A.push({t:'sig',label:g('המצהיר','המצהירה')},{t:'att',s:affAtt()},{t:'lsig',label:'איתמר צור, עו"ד'});
+ } else if(DOCT==='med'){
+  A.push({t:'title',s:'ויתור על סודיות רפואית וסוציאלית'});
+  A.push({t:'p',s:`אני הח"מ, ${NM}, ${IDTXT}, ${g('מאשר','מאשרת')} בזאת כדלקמן:`});
+  A.push({t:'p',s:`הנני ${g('נותן','נותנת')} בזאת רשות לעובד רפואי או למוסד רפואי או למוסד לביטוח לאומי או לצבא הגנה לישראל או למשרד הביטחון או למשטרת ישראל או לשירות בתי הסוהר או לכל איש טיפול למסור לעו"ד איתמר צור את כל הפרטים, ללא יוצא מן הכלל, ובכל אופן שיתבקש, על מצב סוציאלי, בריאותי או שיקומי או על כל מחלה שחליתי בה בעבר או שאני ${g('חולה','חולה')} בה כעת. אני ${g('משחרר','משחררת')} בזה את כל הגורמים המוזכרים לעיל או מי מטעמם מחובת שמירה על סודיות רפואית וסוציאלית בכל הנוגע למצב בריאותי או שיקומי או למחלותיי כאמור, כלפי עו"ד איתמר צור או גורם אחר מטעמו, ולא תהיה לי אליכם כל טענה או תביעה מסוג כלשהו בקשר למסירת מידע כאמור.`});
+  A.push({t:'p',s:`כמו כן, הנני ${g('מאשר','מאשרת')} לעו"ד איתמר צור למסור חומר אודותיי, לרבות דוחות סוציאליים ורפואיים, לכל גוף רלוונטי כנדרש, לפי שיקול דעתו המקצועי, על מנת לטפל בענייני.`});
+  A.push({t:'sig',label:'חתימה',date:true});
+  A.push({t:'att',title:false,s:`אני הח"מ, עו"ד איתמר צור, מאשר ש${g('מר','גב\'')} ${NM}, ${IDTXT}, ${g('נתן','נתנה')} את ${g('הסכמתו','הסכמתה')} שלעיל ו${g('אישר','אישרה')} אותה בחתימת${g('ו','ה')}.`});
+  A.push({t:'lsig',label:'חתימה וחותמת',date:true});
+ }
+ return A;
+}
+const PW=1240,PH=1754,MR=1240-125,ML=125,FS=30,LH=50;
+let SIGBOX=null;
+function wrap(ctx,text,maxW){const words=text.split(' ');const lines=[];let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(ctx.measureText(t).width>maxW&&cur){lines.push(cur);cur=w}else cur=t}if(cur)lines.push(cur);return lines}
+function renderText(){
+ doc.width=PW;doc.height=PH;const c=dg;c.fillStyle='#fff';c.fillRect(0,0,PW,PH);c.fillStyle='#000';c.direction='rtl';c.textBaseline='alphabetic';
+ const F=(b,sz)=>`${b?'bold ':''}${sz||FS}px "David Libre", David, "Times New Roman", serif`;
+ let y=150;const num={n:0};
+ for(const b of spec()){
+  if(b.t==='title'){c.font=F(true,40);c.textAlign='center';c.fillText(b.s,PW/2,y);const w=c.measureText(b.s).width;c.fillRect(PW/2-w/2,y+8,w,2.5);y+=LH*1.8;}
+  else if(b.t==='p'||b.t==='att'){
+   if(b.t==='att'){y+=LH*0.6;if(b.title!==false){c.font=F(true,32);c.textAlign='center';c.fillText('אישור',PW/2,y);y+=LH*1.1}}
+   c.font=F(false);c.textAlign='right';for(const l of wrap(c,b.s,MR-ML)){c.fillText(l,MR,y);y+=LH}y+=LH*0.5;}
+  else if(b.t==='n'){num.n++;c.font=F(false);c.textAlign='right';c.fillText(num.n+'.',MR,y);const ls=wrap(c,b.s,MR-ML-60);for(const l of ls){c.fillText(l,MR-60,y);y+=LH}y+=LH*0.4;}
+  else if(b.t==='sig'||b.t==='lsig'){
+   y+=LH*1.6;c.fillRect(ML,y,320,2);c.font=F(false,26);c.textAlign='center';c.fillText(b.label,ML+160,y+36);
+   if(b.t==='sig'&&NAME&&!b.date){c.fillText(NAME,ML+160,y+70)}
+   if(b.date){c.fillRect(MR-260,y,260,2);c.fillText('תאריך',MR-130,y+36);if(b.t==='sig'){c.font=F(true,28);c.fillText(DSTR,MR-130,y-12)}}
+   if(b.t==='sig')SIGBOX={x:ML,y:y-80,w:320,h:76};
+   y+=b.t==='sig'&&NAME&&!b.date?LH*2:LH*1.4;}
+ }
+ if(sigCanvas&&SIGBOX){const k=Math.min(SIGBOX.w/sigCanvas.width,SIGBOX.h/sigCanvas.height);const w=sigCanvas.width*k,h=sigCanvas.height*k;c.drawImage(sigCanvas,SIGBOX.x+(SIGBOX.w-w)/2,SIGBOX.y+(SIGBOX.h-h),w,h)}
+}
+function render(){if(DOCT==='poa'){if(tpl.complete&&tpl.naturalWidth)renderPoa()}else renderText()}
+if(DOCT!=='poa'){document.getElementById('h1').textContent=TITLES[DOCT]+' לחתימה – עו"ד איתמר צור';document.title=TITLES[DOCT]+' לחתימה';document.getElementById('phone').hidden=true;document.getElementById('phlab').hidden=true;
+ (document.fonts?document.fonts.load('30px "David Libre"').then(()=>document.fonts.load('bold 30px "David Libre"')):Promise.resolve()).then(render,render);}
 document.getElementById('phone').addEventListener('input',render);
 const pad=document.getElementById('pad'),pg=pad.getContext('2d');let drawing=false,last=null,dirty=false;
 function size(){const r=pad.getBoundingClientRect(),d=window.devicePixelRatio||1;pad.width=r.width*d;pad.height=r.height*d;pg.setTransform(d,0,0,d,0,0);pg.lineWidth=2.8;pg.lineCap='round';pg.lineJoin='round';pg.strokeStyle='#0b2a6b';dirty=false;sigCanvas=null;render()}
@@ -69,10 +142,10 @@ document.getElementById('send').onclick=async()=>{msg.className='';
  if(!sigCanvas){msg.textContent='צריך לחתום קודם · لازم توقّع أول · Please sign first';return}
  render();const img=doc.toDataURL('image/jpeg',0.85);
  const pdf=new jspdf.jsPDF({unit:'pt',format:'a4'});pdf.addImage(img,'JPEG',0,0,595.28,841.89);
- const fname='POA signed'+(NAME?' - '+NAME:'')+'.pdf';const blob=pdf.output('blob');const file=new File([blob],fname,{type:'application/pdf'});
+ const fname=TITLES[DOCT]+' חתום'+(NAME?' - '+NAME:'')+'.pdf';const blob=pdf.output('blob');const file=new File([blob],fname,{type:'application/pdf'});
  msg.textContent='שולח… · جاري الإرسال… · Sending…';
  try{const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=rej;fr.readAsDataURL(blob)});
-  const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({name:NAME,id:ID,phone:document.getElementById('phone').value.trim(),pdf:b64})});
+  const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({doc:TITLES[DOCT],name:NAME,id:ID,phone:document.getElementById('phone').value.trim(),pdf:b64})});
   const j=await r.json(); if(j&&j.ok){msg.className='ok';msg.textContent='נשלח לעורך הדין ✓ · تم الإرسال للمحامي ✓ · Sent to the lawyer ✓';return}}catch(e){}
  msg.textContent='';
  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:fname});msg.className='ok';msg.textContent='נשלח · تم الإرسال · Sent';return}}catch(e){if(e&&e.name==='AbortError'){return}}

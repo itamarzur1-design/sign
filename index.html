@@ -23,7 +23,7 @@ button{font:inherit;font-weight:700;padding:13px 16px;border-radius:9px;border:1
 </style></head><body>
 <div class="wrap">
   <div><h1 id="h1">ייפוי כוח לחתימה – עו"ד איתמר צור</h1>
-  <div class="sub">توكيل للتوقيع – المحامي إيتمار تسور · Power of attorney for signature</div></div>
+  <div class="sub" id="sub">توكيل للتوقيع – المحامي إيتمار تسور · Power of attorney for signature</div></div>
   <canvas id="doc"></canvas>
   <div class="box">
     <label for="phone" id="phlab">מספר טלפון (לא חובה) · رقم التلفون (اختياري) · Phone (optional)</label>
@@ -123,7 +123,7 @@ function renderText(){
  if(sigCanvas&&SIGBOX){const k=Math.min(SIGBOX.w/sigCanvas.width,SIGBOX.h/sigCanvas.height);const w=sigCanvas.width*k,h=sigCanvas.height*k;c.drawImage(sigCanvas,SIGBOX.x+(SIGBOX.w-w)/2,SIGBOX.y+(SIGBOX.h-h),w,h)}
 }
 function render(){if(DOCT==='poa'){if(tpl.complete&&tpl.naturalWidth)renderPoa()}else renderText()}
-if(DOCT!=='poa'){document.getElementById('h1').textContent=TITLES[DOCT]+' לחתימה – עו"ד איתמר צור';document.title=TITLES[DOCT]+' לחתימה';document.getElementById('phone').hidden=true;document.getElementById('phlab').hidden=true;
+if(DOCT!=='poa'){document.getElementById('h1').textContent=TITLES[DOCT]+' לחתימה – עו"ד איתמר צור';document.title=TITLES[DOCT]+' לחתימה';document.getElementById('sub').textContent='مستند للتوقيع – المحامي إيتمار تسور · Document for signature';document.getElementById('phone').hidden=true;document.getElementById('phlab').hidden=true;
  (document.fonts?document.fonts.load('30px "David Libre"').then(()=>document.fonts.load('bold 30px "David Libre"')):Promise.resolve()).then(render,render);}
 document.getElementById('phone').addEventListener('input',render);
 const pad=document.getElementById('pad'),pg=pad.getContext('2d');let drawing=false,last=null,dirty=false;
